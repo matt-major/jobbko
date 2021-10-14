@@ -5,11 +5,14 @@ import (
 	"net/http"
 	"time"
 
+	aws "github.com/matt-major/jobbko/app/aws"
 	"github.com/matt-major/jobbko/app/router"
 )
 
 func main() {
 	r := router.New()
+
+	aws.InitAwsSession()
 
 	srv := &http.Server{
 		Handler: r,

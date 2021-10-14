@@ -1,1 +1,6 @@
+# bin
 jobbko
+
+# generated
+.DS_Store
+.idea/
