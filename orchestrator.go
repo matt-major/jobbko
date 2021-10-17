@@ -1,8 +1,9 @@
 package main
 
 type ProcessorOrchestrator struct {
-	numProcessors int
-	numGroups     int
+	numProcessors  int
+	numGroups      int
+	maxConcurrency int
 }
 
 func (po *ProcessorOrchestrator) StartProcessors() {
@@ -10,7 +11,7 @@ func (po *ProcessorOrchestrator) StartProcessors() {
 	for i := range processors {
 		go func(id int) {
 			groupIds := po.getGroupIdsForProcessor(id)
-			p := NewProcessor(id, groupIds)
+			p := NewProcessor(id, groupIds, po.maxConcurrency)
 			p.Start()
 		}(i)
 	}
