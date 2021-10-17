@@ -8,10 +8,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
 
-func InsertEvent(event interface{}) {
-	avs, err := dynamodbattribute.MarshalMap(event)
+func InsertEvent(item ScheduledEventItem) {
+	avs, err := dynamodbattribute.MarshalMap(item)
 	if err != nil {
-		log.Fatalf("Got error marshalling new movie item: %s", err)
+		log.Fatalf("Got error marshalling new item: %s", err)
 	}
 
 	input := &dynamodb.PutItemInput{

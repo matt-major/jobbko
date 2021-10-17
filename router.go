@@ -37,7 +37,7 @@ func scheduleEventHandler(w http.ResponseWriter, req *http.Request) {
 
 	reqBody, _ := ioutil.ReadAll(req.Body)
 
-	newEvent := ScheduledEvent{
+	newEvent := awsc.ScheduledEventItem{
 		Id:      uuid.New().String(),
 		GroupId: groupId,
 		State:   "SCHEDULED",
