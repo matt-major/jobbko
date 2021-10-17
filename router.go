@@ -1,4 +1,4 @@
-package router
+package main
 
 import (
 	"encoding/json"
@@ -10,11 +10,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	aws "github.com/matt-major/jobbko/app/aws"
-	"github.com/matt-major/jobbko/app/scheduler"
+	"github.com/matt-major/jobbko/awsc"
 )
 
-func New() http.Handler {
+func NewRouter() http.Handler {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/status", statusHandler).Methods("GET")
@@ -34,15 +33,15 @@ func scheduleEventHandler(w http.ResponseWriter, req *http.Request) {
 	eventType := params["type"][0]
 	destination := params["destination"][0]
 	scheduleAt, _ := strconv.Atoi(params["scheduleAt"][0])
-	shardId := strconv.Itoa(getShardId())
+	groupId := strconv.Itoa(getGroupId())
 
 	reqBody, _ := ioutil.ReadAll(req.Body)
 
-	newEvent := scheduler.ScheduledEvent{
-		ScheduleId: uuid.New().String(),
-		ShardId:    shardId,
-		State:      "SCHEDULED",
-		Event: scheduler.ScheduledEventData{
+	newEvent := ScheduledEvent{
+		Id:      uuid.New().String(),
+		GroupId: groupId,
+		State:   "SCHEDULED",
+		Data: ScheduledEventData{
 			Type:        eventType,
 			Destination: destination,
 			CreatedAt:   time.Now().Unix(),
@@ -51,12 +50,12 @@ func scheduleEventHandler(w http.ResponseWriter, req *http.Request) {
 		},
 	}
 
-	aws.InsertEvent(newEvent)
+	awsc.InsertEvent(newEvent)
 
 	w.WriteHeader(http.StatusCreated)
 }
 
-func getShardId() int {
+func getGroupId() int {
 	min := 0
 	max := 5
 

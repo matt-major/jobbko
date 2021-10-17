@@ -1,10 +1,10 @@
-package scheduler
+package main
 
 type ScheduledEvent struct {
-	ScheduleId string             `json:"scheduleId"`
-	ShardId    string             `json:"shardId"`
-	State      string             `json:"state"`
-	Event      ScheduledEventData `json:"event"`
+	Id      string             `json:"Id"`
+	GroupId string             `json:"groupId"`
+	State   string             `json:"state"`
+	Data    ScheduledEventData `json:"event"`
 }
 
 type ScheduledEventData struct {
