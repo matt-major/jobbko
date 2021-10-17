@@ -1,7 +1,10 @@
 package awsc
 
 import (
+	"fmt"
 	"log"
+	"strconv"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -24,4 +27,45 @@ func InsertEvent(item ScheduledEventItem) {
 	if err2 != nil {
 		log.Fatalf("Got error calling PutItem: %s", err2)
 	}
+}
+
+func GetProcessableEvents(groupId int, limit int) []ScheduledEventItem {
+	svc := dynamodb.New(AwsSession)
+
+	now := time.Now().Unix()
+
+	result, err := svc.Query(&dynamodb.QueryInput{
+		TableName:              aws.String("jobbko_scheduled_events"),
+		FilterExpression:       aws.String("#state = :state"),
+		KeyConditionExpression: aws.String("#groupId = :groupId and #id < :id"),
+		ExpressionAttributeNames: map[string]*string{
+			"#groupId": aws.String("groupId"),
+			"#state":   aws.String("state"),
+			"#id":      aws.String("id"),
+		},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":groupId": {
+				S: aws.String(strconv.Itoa(groupId)),
+			},
+			":id": {
+				S: aws.String(strconv.Itoa(int(now))),
+			},
+			":state": {
+				S: aws.String("SCHEDULED"),
+			},
+		},
+		Limit: aws.Int64(int64(limit)),
+	})
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	var items []ScheduledEventItem
+	marshErr := dynamodbattribute.UnmarshalListOfMaps(result.Items, &items)
+	if marshErr != nil {
+		fmt.Println(marshErr)
+	}
+
+	return items
 }

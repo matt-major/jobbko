@@ -23,7 +23,7 @@ func InitAwsSession() error {
 }
 
 type ScheduledEventItem struct {
-	Id      string      `json:"Id"`
+	Id      string      `json:"id"`
 	GroupId string      `json:"groupId"`
 	State   string      `json:"state"`
 	Data    interface{} `json:"data"`

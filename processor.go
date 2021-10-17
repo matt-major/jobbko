@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 	"sync"
-	"time"
+
+	"github.com/matt-major/jobbko/awsc"
 )
 
 type Processor struct {
@@ -31,29 +32,46 @@ func (p *Processor) Start() {
 }
 
 func (p *Processor) scanGroup(groupId int) {
-	// TODO Scan DynamoDB for group, returning events to process
+	items := awsc.GetProcessableEvents(groupId, 20)
 
 	var wg sync.WaitGroup                            // WaitGroup to track event processing state
 	limiter := make(chan struct{}, p.maxConcurrency) // Limiter for number of goroutines
 
-	// TODO Loop to create goroutines for each event, create waitgroup for these
-	for i := 0; i < 200; i++ {
+	for i := range items {
 		wg.Add(1)
-		limiter <- struct{}{}
-		go func(n int, groupId int, wg *sync.WaitGroup) {
-			defer wg.Done()
-			fmt.Println("Processor", p.id, "Group", groupId, "Loop", n)
-			time.Sleep(1 * time.Second)
-			<-limiter
-		}(i, groupId, &wg)
+		limiter <- struct{}{} // Add to limiter, blocks if too many concurrent goroutines
+		go p.processEvent(items[i], &wg, limiter)
 	}
 
-	// TODO -> In each goroutine, try lock the event, stop if not successful
+	wg.Wait()                                                    // Wait for all events to be processed
+	fmt.Println("Processor", p.id, "Group", groupId, "Finished") // TODO Replace with logger.debug
+
+	p.scanGroup(groupId) // Trigger next "tick"
+}
+
+func (p *Processor) processEvent(event awsc.ScheduledEventItem, wg *sync.WaitGroup, limiter chan struct{}) {
+	defer wg.Done()
+
+	lock := p.lockEvent(event.Id)
+	if !lock {
+		<-limiter
+		return
+	}
+
 	// TODO -> If successful, try to dispatch the event to SQS
-	// TODO -> When done, delete item from DynamoDB
 
-	wg.Wait() // Wait for all events to be processed
-	fmt.Println("Done")
+	p.deleteEvent(event.Id) // If dispatched, delete from DynamoDB
 
-	// p.scanGroup(groupId) // Trigger next "tick"
+	<-limiter
+}
+
+func (p *Processor) lockEvent(id string) bool {
+	// TODO Optimistically lock event in DynamoDB
+	// TODO Log error regarding lock
+	return true
+}
+
+func (p *Processor) deleteEvent(id string) {
+	// TODO Delete event in DynamoDB
+	// TODO Log error regarding deletion
 }

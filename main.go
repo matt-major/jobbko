@@ -21,9 +21,9 @@ func main() {
 	}
 
 	orchestrator := ProcessorOrchestrator{
-		numProcessors:  1,
-		numGroups:      1,
-		maxConcurrency: 10,
+		numProcessors:  5,
+		numGroups:      10,
+		maxConcurrency: 50,
 	}
 	orchestrator.StartProcessors()
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -38,7 +39,7 @@ func scheduleEventHandler(w http.ResponseWriter, req *http.Request) {
 	reqBody, _ := ioutil.ReadAll(req.Body)
 
 	newEvent := awsc.ScheduledEventItem{
-		Id:      uuid.New().String(),
+		Id:      getEventId(scheduleAt),
 		GroupId: groupId,
 		State:   "SCHEDULED",
 		Data: ScheduledEventData{
@@ -55,9 +56,13 @@ func scheduleEventHandler(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+func getEventId(scheduledAt int) string {
+	return fmt.Sprintf("%s#%s", strconv.Itoa(scheduledAt), uuid.New().String())
+}
+
 func getGroupId() int {
 	min := 0
-	max := 5
+	max := 10
 
 	return rand.Intn(max-min) + min
 }
