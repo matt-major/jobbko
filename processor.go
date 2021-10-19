@@ -32,7 +32,7 @@ func (p *Processor) Start() {
 }
 
 func (p *Processor) scanGroup(groupId int) {
-	items := awsc.GetProcessableEvents(groupId, 20)
+	items := awsc.GetProcessableEvents(groupId, 250)
 
 	var wg sync.WaitGroup                            // WaitGroup to track event processing state
 	limiter := make(chan struct{}, p.maxConcurrency) // Limiter for number of goroutines
@@ -43,8 +43,7 @@ func (p *Processor) scanGroup(groupId int) {
 		go p.processEvent(items[i], &wg, limiter)
 	}
 
-	wg.Wait()                                                    // Wait for all events to be processed
-	fmt.Println("Processor", p.id, "Group", groupId, "Finished") // TODO Replace with logger.debug
+	wg.Wait() // Wait for all events to be processed
 
 	p.scanGroup(groupId) // Trigger next "tick"
 }
@@ -52,7 +51,7 @@ func (p *Processor) scanGroup(groupId int) {
 func (p *Processor) processEvent(event awsc.ScheduledEventItem, wg *sync.WaitGroup, limiter chan struct{}) {
 	defer wg.Done()
 
-	lock := p.lockEvent(event.Id)
+	lock := p.lockEvent(event)
 	if !lock {
 		<-limiter
 		return
@@ -65,10 +64,8 @@ func (p *Processor) processEvent(event awsc.ScheduledEventItem, wg *sync.WaitGro
 	<-limiter
 }
 
-func (p *Processor) lockEvent(id string) bool {
-	// TODO Optimistically lock event in DynamoDB
-	// TODO Log error regarding lock
-	return true
+func (p *Processor) lockEvent(event awsc.ScheduledEventItem) bool {
+	return awsc.LockEvent(event)
 }
 
 func (p *Processor) deleteEvent(id string) {

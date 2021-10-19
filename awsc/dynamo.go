@@ -51,7 +51,7 @@ func GetProcessableEvents(groupId int, limit int) []ScheduledEventItem {
 				S: aws.String(strconv.Itoa(int(now))),
 			},
 			":state": {
-				S: aws.String("SCHEDULED"),
+				S: aws.String("PENDING"),
 			},
 		},
 		Limit: aws.Int64(int64(limit)),
@@ -68,4 +68,41 @@ func GetProcessableEvents(groupId int, limit int) []ScheduledEventItem {
 	}
 
 	return items
+}
+
+func LockEvent(event ScheduledEventItem) bool {
+	svc := dynamodb.New(AwsSession)
+
+	result, err := svc.UpdateItem(&dynamodb.UpdateItemInput{
+		TableName: aws.String("jobbko_scheduled_events"),
+		ExpressionAttributeNames: map[string]*string{
+			"#state": aws.String("state"),
+		},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":oldState": {
+				S: aws.String("PENDING"),
+			},
+			":newState": {
+				S: aws.String("LOCKED"),
+			},
+		},
+		Key: map[string]*dynamodb.AttributeValue{
+			"groupId": {
+				S: aws.String(event.GroupId),
+			},
+			"id": {
+				S: aws.String(event.Id),
+			},
+		},
+		ConditionExpression: aws.String("#state = :oldState"),
+		UpdateExpression:    aws.String("SET #state = :newState"),
+		ReturnValues:        aws.String("ALL_NEW"),
+	})
+
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	return *result.Attributes["state"].S == "LOCKED"
 }

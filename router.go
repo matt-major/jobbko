@@ -41,7 +41,7 @@ func scheduleEventHandler(w http.ResponseWriter, req *http.Request) {
 	newEvent := awsc.ScheduledEventItem{
 		Id:      getEventId(scheduleAt),
 		GroupId: groupId,
-		State:   "SCHEDULED",
+		State:   "PENDING",
 		Data: ScheduledEventData{
 			Type:        eventType,
 			Destination: destination,
