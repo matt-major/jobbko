@@ -45,6 +45,7 @@ func (p *Processor) scanGroup(groupId int) {
 
 	wg.Wait() // Wait for all events to be processed
 
+	//lint:ignore SA5007 because this is meant to be recursive
 	p.scanGroup(groupId) // Trigger next "tick"
 }
 
@@ -59,7 +60,7 @@ func (p *Processor) processEvent(event awsc.ScheduledEventItem, wg *sync.WaitGro
 
 	// TODO -> If successful, try to dispatch the event to SQS
 
-	p.deleteEvent(event.Id) // If dispatched, delete from DynamoDB
+	p.deleteEvent(event) // If dispatched, delete from DynamoDB
 
 	<-limiter
 }
@@ -68,7 +69,6 @@ func (p *Processor) lockEvent(event awsc.ScheduledEventItem) bool {
 	return awsc.LockEvent(event)
 }
 
-func (p *Processor) deleteEvent(id string) {
-	// TODO Delete event in DynamoDB
-	// TODO Log error regarding deletion
+func (p *Processor) deleteEvent(event awsc.ScheduledEventItem) {
+	awsc.DeleteEvent(event)
 }

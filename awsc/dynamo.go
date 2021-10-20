@@ -100,9 +100,29 @@ func LockEvent(event ScheduledEventItem) bool {
 	})
 
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Failed to lock Event", event.Id, err)
 		return false
 	}
 
 	return *result.Attributes["state"].S == "LOCKED"
+}
+
+func DeleteEvent(event ScheduledEventItem) {
+	svc := dynamodb.New(AwsSession)
+
+	_, err := svc.DeleteItem(&dynamodb.DeleteItemInput{
+		TableName: aws.String("jobbko_scheduled_events"),
+		Key: map[string]*dynamodb.AttributeValue{
+			"groupId": {
+				S: aws.String(event.GroupId),
+			},
+			"id": {
+				S: aws.String(event.Id),
+			},
+		},
+	})
+
+	if err != nil {
+		fmt.Println("Failed to delete Event", event.Id, err)
+	}
 }
