@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/matt-major/jobbko/awsc"
+	"github.com/matt-major/jobbko/src/awsc"
 )
 
 func NewRouter() http.Handler {

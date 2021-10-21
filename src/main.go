@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/matt-major/jobbko/awsc"
+	"github.com/matt-major/jobbko/src/awsc"
 )
 
 func main() {

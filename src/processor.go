@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/matt-major/jobbko/awsc"
+	"github.com/matt-major/jobbko/src/awsc"
 )
 
 type Processor struct {
