@@ -22,19 +22,16 @@ func InsertEvent(item ScheduledEventItem) {
 		TableName: aws.String("jobbko_scheduled_events"),
 	}
 
-	svc := dynamodb.New(AwsSession)
-	_, err2 := svc.PutItem(input)
+	_, err2 := AwsClient.DynamoClient.PutItem(input)
 	if err2 != nil {
 		log.Fatalf("Got error calling PutItem: %s", err2)
 	}
 }
 
 func GetProcessableEvents(groupId int, limit int) []ScheduledEventItem {
-	svc := dynamodb.New(AwsSession)
-
 	now := time.Now().Unix()
 
-	result, err := svc.Query(&dynamodb.QueryInput{
+	result, err := AwsClient.DynamoClient.Query(&dynamodb.QueryInput{
 		TableName:              aws.String("jobbko_scheduled_events"),
 		FilterExpression:       aws.String("#state = :state"),
 		KeyConditionExpression: aws.String("#groupId = :groupId and #id < :id"),
@@ -71,9 +68,7 @@ func GetProcessableEvents(groupId int, limit int) []ScheduledEventItem {
 }
 
 func LockEvent(event ScheduledEventItem) bool {
-	svc := dynamodb.New(AwsSession)
-
-	result, err := svc.UpdateItem(&dynamodb.UpdateItemInput{
+	result, err := AwsClient.DynamoClient.UpdateItem(&dynamodb.UpdateItemInput{
 		TableName: aws.String("jobbko_scheduled_events"),
 		ExpressionAttributeNames: map[string]*string{
 			"#state": aws.String("state"),
@@ -108,9 +103,7 @@ func LockEvent(event ScheduledEventItem) bool {
 }
 
 func DeleteEvent(event ScheduledEventItem) {
-	svc := dynamodb.New(AwsSession)
-
-	_, err := svc.DeleteItem(&dynamodb.DeleteItemInput{
+	_, err := AwsClient.DynamoClient.DeleteItem(&dynamodb.DeleteItemInput{
 		TableName: aws.String("jobbko_scheduled_events"),
 		Key: map[string]*dynamodb.AttributeValue{
 			"groupId": {

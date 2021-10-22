@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -52,23 +53,20 @@ func (p *Processor) scanGroup(groupId int) {
 func (p *Processor) processEvent(event awsc.ScheduledEventItem, wg *sync.WaitGroup, limiter chan struct{}) {
 	defer wg.Done()
 
-	lock := p.lockEvent(event)
+	lock := awsc.LockEvent(event)
 	if !lock {
 		<-limiter
 		return
 	}
 
-	// TODO -> If successful, try to dispatch the event to SQS
+	jsonData, _ := json.Marshal(event.Data)
+	var eventData ScheduledEventData
+	json.Unmarshal(jsonData, &eventData)
 
-	p.deleteEvent(event) // If dispatched, delete from DynamoDB
+	hasSentMessage := awsc.SendEventToQueue(eventData.Payload, eventData.Destination)
+	if hasSentMessage {
+		awsc.DeleteEvent(event) // If dispatched, delete from DynamoDB
+	}
 
 	<-limiter
-}
-
-func (p *Processor) lockEvent(event awsc.ScheduledEventItem) bool {
-	return awsc.LockEvent(event)
-}
-
-func (p *Processor) deleteEvent(event awsc.ScheduledEventItem) {
-	awsc.DeleteEvent(event)
 }

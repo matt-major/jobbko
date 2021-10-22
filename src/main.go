@@ -11,7 +11,7 @@ import (
 func main() {
 	r := NewRouter()
 
-	awsc.InitAwsSession()
+	awsc.InitAwsClient()
 
 	srv := &http.Server{
 		Handler:      r,

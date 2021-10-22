@@ -3,11 +3,19 @@ package awsc
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/sqs"
 )
 
-var AwsSession *session.Session
+var AwsClient *AwsClientStruct
 
-func InitAwsSession() error {
+type AwsClientStruct struct {
+	AwsSession   *session.Session
+	SqsClient    *sqs.SQS
+	DynamoClient *dynamodb.DynamoDB
+}
+
+func InitAwsClient() error {
 	session, err := session.NewSession(&aws.Config{
 		Region:   aws.String("us-west-2"),
 		Endpoint: aws.String("http://localhost:4566"),
@@ -17,7 +25,11 @@ func InitAwsSession() error {
 		return err
 	}
 
-	AwsSession = session
+	AwsClient = &AwsClientStruct{
+		AwsSession:   session,
+		SqsClient:    sqs.New(session),
+		DynamoClient: dynamodb.New(session),
+	}
 
 	return nil
 }
