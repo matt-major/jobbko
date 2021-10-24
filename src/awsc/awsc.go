@@ -17,7 +17,7 @@ type AwsClientStruct struct {
 
 func InitAwsClient() error {
 	session, err := session.NewSession(&aws.Config{
-		Region:   aws.String("us-west-2"),
+		Region:   aws.String("eu-west-2"),
 		Endpoint: aws.String("http://localhost:4566"),
 	})
 
