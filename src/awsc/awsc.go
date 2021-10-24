@@ -1,37 +1,38 @@
 package awsc
 
 import (
+	"log"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/sirupsen/logrus"
 )
 
-var AwsClient *AwsClientStruct
-
-type AwsClientStruct struct {
+type AwsClient struct {
+	logger       *logrus.Logger
 	AwsSession   *session.Session
 	SqsClient    *sqs.SQS
 	DynamoClient *dynamodb.DynamoDB
 }
 
-func InitAwsClient() error {
+func InitAwsClient(logger *logrus.Logger) *AwsClient {
 	session, err := session.NewSession(&aws.Config{
 		Region:   aws.String("eu-west-2"),
 		Endpoint: aws.String("http://localhost:4566"),
 	})
 
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	AwsClient = &AwsClientStruct{
+	return &AwsClient{
+		logger:       logger,
 		AwsSession:   session,
 		SqsClient:    sqs.New(session),
 		DynamoClient: dynamodb.New(session),
 	}
-
-	return nil
 }
 
 type ScheduledEventItem struct {

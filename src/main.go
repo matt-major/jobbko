@@ -1,17 +1,16 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"time"
 
-	"github.com/matt-major/jobbko/src/awsc"
+	"github.com/matt-major/jobbko/src/context"
 )
 
 func main() {
-	r := NewRouter()
+	appContext := context.CreateApplicationContext()
 
-	awsc.InitAwsClient()
+	r := NewRouter(appContext)
 
 	srv := &http.Server{
 		Handler:      r,
@@ -25,9 +24,9 @@ func main() {
 		numGroups:      10,
 		maxConcurrency: 2,
 	}
-	orchestrator.StartProcessors()
+	orchestrator.StartProcessors(appContext)
 
 	if err := srv.ListenAndServe(); err != nil {
-		log.Println(err)
+		appContext.Logger.Error(err)
 	}
 }

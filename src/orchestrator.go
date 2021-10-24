@@ -1,17 +1,22 @@
 package main
 
+import "github.com/matt-major/jobbko/src/context"
+
 type ProcessorOrchestrator struct {
 	numProcessors  int
 	numGroups      int
 	maxConcurrency int
 }
 
-func (po *ProcessorOrchestrator) StartProcessors() {
+func (po *ProcessorOrchestrator) StartProcessors(context *context.ApplicationContext) {
+	context.Logger.Info("Starting event processors...")
+
 	processors := make([]int, po.numProcessors)
 	for i := range processors {
 		go func(id int) {
 			groupIds := po.getGroupIdsForProcessor(id)
-			p := NewProcessor(id, groupIds, po.maxConcurrency)
+			p := NewProcessor(id, groupIds, po.maxConcurrency, context)
+			context.Logger.Info("Created event processor ", id)
 			p.Start()
 		}(i)
 	}

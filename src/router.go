@@ -12,24 +12,32 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/matt-major/jobbko/src/awsc"
+	"github.com/matt-major/jobbko/src/context"
 )
 
-func NewRouter() http.Handler {
-	r := mux.NewRouter()
+func NewRouter(context *context.ApplicationContext) http.Handler {
+	handlers := Handlers{
+		context: context,
+	}
 
-	r.HandleFunc("/status", statusHandler).Methods("GET")
-	r.HandleFunc("/schedule", scheduleEventHandler).Methods("POST")
+	r := mux.NewRouter()
+	r.HandleFunc("/status", handlers.StatusHandler).Methods("GET")
+	r.HandleFunc("/schedule", handlers.ScheduleEventHandler).Methods("POST")
 
 	return r
 }
 
-func statusHandler(w http.ResponseWriter, req *http.Request) {
+type Handlers struct {
+	context *context.ApplicationContext
+}
+
+func (h *Handlers) StatusHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "UP"})
 }
 
-func scheduleEventHandler(w http.ResponseWriter, req *http.Request) {
+func (h *Handlers) ScheduleEventHandler(w http.ResponseWriter, req *http.Request) {
 	params := req.URL.Query()
 	eventType := params["type"][0]
 	destination := params["destination"][0]
@@ -51,7 +59,7 @@ func scheduleEventHandler(w http.ResponseWriter, req *http.Request) {
 		},
 	}
 
-	awsc.InsertEvent(newEvent)
+	h.context.AwsClient.InsertEvent(newEvent)
 
 	w.WriteHeader(http.StatusCreated)
 }

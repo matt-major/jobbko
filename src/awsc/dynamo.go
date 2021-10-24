@@ -1,8 +1,6 @@
 package awsc
 
 import (
-	"fmt"
-	"log"
 	"strconv"
 	"time"
 
@@ -11,10 +9,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
 
-func InsertEvent(item ScheduledEventItem) {
+func (c *AwsClient) InsertEvent(item ScheduledEventItem) {
 	avs, err := dynamodbattribute.MarshalMap(item)
 	if err != nil {
-		log.Fatalf("Got error marshalling new item: %s", err)
+		c.logger.Errorf("Got error marshalling new item: %s", err)
 	}
 
 	input := &dynamodb.PutItemInput{
@@ -22,16 +20,16 @@ func InsertEvent(item ScheduledEventItem) {
 		TableName: aws.String("jobbko_scheduled_events"),
 	}
 
-	_, err2 := AwsClient.DynamoClient.PutItem(input)
+	_, err2 := c.DynamoClient.PutItem(input)
 	if err2 != nil {
-		log.Fatalf("Got error calling PutItem: %s", err2)
+		c.logger.Errorf("Got error calling PutItem: %s", err2)
 	}
 }
 
-func GetProcessableEvents(groupId int, limit int) []ScheduledEventItem {
+func (c *AwsClient) GetProcessableEvents(groupId int, limit int) []ScheduledEventItem {
 	now := time.Now().Unix()
 
-	result, err := AwsClient.DynamoClient.Query(&dynamodb.QueryInput{
+	result, err := c.DynamoClient.Query(&dynamodb.QueryInput{
 		TableName:              aws.String("jobbko_scheduled_events"),
 		FilterExpression:       aws.String("#state = :state"),
 		KeyConditionExpression: aws.String("#groupId = :groupId and #id < :id"),
@@ -55,20 +53,20 @@ func GetProcessableEvents(groupId int, limit int) []ScheduledEventItem {
 	})
 
 	if err != nil {
-		fmt.Println(err)
+		c.logger.Errorf("Error retrieving processable events from DynamoDB: %s", err)
 	}
 
 	var items []ScheduledEventItem
 	marshErr := dynamodbattribute.UnmarshalListOfMaps(result.Items, &items)
 	if marshErr != nil {
-		fmt.Println(marshErr)
+		c.logger.Errorf("Failed to unmarshal DynamoDB items: %s", marshErr)
 	}
 
 	return items
 }
 
-func LockEvent(event ScheduledEventItem) bool {
-	result, err := AwsClient.DynamoClient.UpdateItem(&dynamodb.UpdateItemInput{
+func (c *AwsClient) LockEvent(event ScheduledEventItem) bool {
+	result, err := c.DynamoClient.UpdateItem(&dynamodb.UpdateItemInput{
 		TableName: aws.String("jobbko_scheduled_events"),
 		ExpressionAttributeNames: map[string]*string{
 			"#state": aws.String("state"),
@@ -95,15 +93,15 @@ func LockEvent(event ScheduledEventItem) bool {
 	})
 
 	if err != nil {
-		fmt.Println("Failed to lock Event", event.Id, err)
+		c.logger.Errorf("Failed to lock Event %s: %s", event.Id, err)
 		return false
 	}
 
 	return *result.Attributes["state"].S == "LOCKED"
 }
 
-func DeleteEvent(event ScheduledEventItem) {
-	_, err := AwsClient.DynamoClient.DeleteItem(&dynamodb.DeleteItemInput{
+func (c *AwsClient) DeleteEvent(event ScheduledEventItem) {
+	_, err := c.DynamoClient.DeleteItem(&dynamodb.DeleteItemInput{
 		TableName: aws.String("jobbko_scheduled_events"),
 		Key: map[string]*dynamodb.AttributeValue{
 			"groupId": {
@@ -116,6 +114,6 @@ func DeleteEvent(event ScheduledEventItem) {
 	})
 
 	if err != nil {
-		fmt.Println("Failed to delete Event", event.Id, err)
+		c.logger.Errorf("Failed to delete Event %s: %s", event.Id, err)
 	}
 }

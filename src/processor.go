@@ -2,30 +2,35 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"sync"
 
 	"github.com/matt-major/jobbko/src/awsc"
+	"github.com/matt-major/jobbko/src/context"
+	"github.com/sirupsen/logrus"
 )
 
 type Processor struct {
 	id                int
 	allocatedGroupIds []int
 	maxConcurrency    int
+	logger            *logrus.Logger
+	context           *context.ApplicationContext
 }
 
-func NewProcessor(processorId int, allocatedGroupIds []int, maxConcurrency int) *Processor {
+func NewProcessor(processorId int, allocatedGroupIds []int, maxConcurrency int, context *context.ApplicationContext) *Processor {
 	p := &Processor{
 		id:                processorId,
 		allocatedGroupIds: allocatedGroupIds,
 		maxConcurrency:    maxConcurrency,
+		logger:            context.Logger,
+		context:           context,
 	}
 
 	return p
 }
 
 func (p *Processor) Start() {
-	fmt.Println("Starting Processor", p.id, ", allocatedGroupIds:", p.allocatedGroupIds)
+	p.context.Logger.Info("Starting Processor ", p.id, ", allocatedGroupIds: ", p.allocatedGroupIds)
 
 	for i := range p.allocatedGroupIds {
 		go p.scanGroup(p.allocatedGroupIds[i])
@@ -33,7 +38,7 @@ func (p *Processor) Start() {
 }
 
 func (p *Processor) scanGroup(groupId int) {
-	items := awsc.GetProcessableEvents(groupId, 250)
+	items := p.context.AwsClient.GetProcessableEvents(groupId, 250)
 
 	var wg sync.WaitGroup                            // WaitGroup to track event processing state
 	limiter := make(chan struct{}, p.maxConcurrency) // Limiter for number of goroutines
@@ -53,7 +58,7 @@ func (p *Processor) scanGroup(groupId int) {
 func (p *Processor) processEvent(event awsc.ScheduledEventItem, wg *sync.WaitGroup, limiter chan struct{}) {
 	defer wg.Done()
 
-	lock := awsc.LockEvent(event)
+	lock := p.context.AwsClient.LockEvent(event)
 	if !lock {
 		<-limiter
 		return
@@ -63,10 +68,12 @@ func (p *Processor) processEvent(event awsc.ScheduledEventItem, wg *sync.WaitGro
 	var eventData ScheduledEventData
 	json.Unmarshal(jsonData, &eventData)
 
-	hasSentMessage := awsc.SendEventToQueue(eventData.Payload, eventData.Destination)
+	hasSentMessage := p.context.AwsClient.SendEventToQueue(eventData.Payload, eventData.Destination)
 	if hasSentMessage {
-		awsc.DeleteEvent(event) // If dispatched, delete from DynamoDB
+		p.context.AwsClient.DeleteEvent(event) // If dispatched, delete from DynamoDB
 	}
+
+	p.logger.Infof("Processed Event %s", event.Id)
 
 	<-limiter
 }
