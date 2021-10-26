@@ -1,21 +1,21 @@
-package main
+package processor
 
-import "github.com/matt-major/jobbko/src/context"
+import "github.com/matt-major/jobbko/pkg/context"
 
 type ProcessorOrchestrator struct {
-	numProcessors  int
-	numGroups      int
-	maxConcurrency int
+	NumProcessors  int
+	NumGroups      int
+	MaxConcurrency int
 }
 
 func (po *ProcessorOrchestrator) StartProcessors(context *context.ApplicationContext) {
 	context.Logger.Info("Starting event processors...")
 
-	processors := make([]int, po.numProcessors)
+	processors := make([]int, po.NumProcessors)
 	for i := range processors {
 		go func(id int) {
 			groupIds := po.getGroupIdsForProcessor(id)
-			p := NewProcessor(id, groupIds, po.maxConcurrency, context)
+			p := NewProcessor(id, groupIds, po.MaxConcurrency, context)
 			context.Logger.Info("Created event processor ", id)
 			p.Start()
 		}(i)
@@ -23,13 +23,13 @@ func (po *ProcessorOrchestrator) StartProcessors(context *context.ApplicationCon
 }
 
 func (po *ProcessorOrchestrator) getGroupIdsForProcessor(processorId int) []int {
-	bucket := po.numGroups / po.numProcessors
+	bucket := po.NumGroups / po.NumProcessors
 
 	startGroup := processorId * bucket
 
 	var endGroup int
-	if processorId == po.numProcessors-1 {
-		endGroup = po.numGroups - 1
+	if processorId == po.NumProcessors-1 {
+		endGroup = po.NumGroups - 1
 	} else {
 		endGroup = ((processorId + 1) * bucket) - 1
 	}

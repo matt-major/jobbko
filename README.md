@@ -20,7 +20,7 @@ $ ./env_destroy.sh
 ### Build
 
 ```sh
-$ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o jobbko ./src
+$ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o jobbko cmd/jobbko.go
 $ docker build . -t jobbko
 ```
 

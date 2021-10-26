@@ -1,4 +1,4 @@
-package main
+package definitions
 
 type ScheduledEventData struct {
 	Type        string `json:"type"`

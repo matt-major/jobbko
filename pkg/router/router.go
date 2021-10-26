@@ -1,4 +1,4 @@
-package main
+package router
 
 import (
 	"encoding/json"
@@ -11,8 +11,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/matt-major/jobbko/src/awsc"
-	"github.com/matt-major/jobbko/src/context"
+	"github.com/matt-major/jobbko/pkg/awsc"
+	"github.com/matt-major/jobbko/pkg/context"
+	"github.com/matt-major/jobbko/pkg/definitions"
 )
 
 func NewRouter(context *context.ApplicationContext) http.Handler {
@@ -50,7 +51,7 @@ func (h *Handlers) ScheduleEventHandler(w http.ResponseWriter, req *http.Request
 		Id:      getEventId(scheduleAt),
 		GroupId: groupId,
 		State:   "PENDING",
-		Data: ScheduledEventData{
+		Data: definitions.ScheduledEventData{
 			Type:        eventType,
 			Destination: destination,
 			CreatedAt:   time.Now().Unix(),

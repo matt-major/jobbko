@@ -4,13 +4,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/matt-major/jobbko/src/context"
+	"github.com/matt-major/jobbko/pkg/context"
+	"github.com/matt-major/jobbko/pkg/processor"
+	"github.com/matt-major/jobbko/pkg/router"
 )
 
 func main() {
 	appContext := context.CreateApplicationContext()
 
-	r := NewRouter(appContext)
+	r := router.NewRouter(appContext)
 
 	srv := &http.Server{
 		Handler:      r,
@@ -19,10 +21,10 @@ func main() {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	orchestrator := ProcessorOrchestrator{
-		numProcessors:  2,
-		numGroups:      10,
-		maxConcurrency: 2,
+	orchestrator := processor.ProcessorOrchestrator{
+		NumProcessors:  2,
+		NumGroups:      10,
+		MaxConcurrency: 2,
 	}
 	orchestrator.StartProcessors(appContext)
 

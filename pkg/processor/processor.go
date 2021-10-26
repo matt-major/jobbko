@@ -1,11 +1,12 @@
-package main
+package processor
 
 import (
 	"encoding/json"
 	"sync"
 
-	"github.com/matt-major/jobbko/src/awsc"
-	"github.com/matt-major/jobbko/src/context"
+	"github.com/matt-major/jobbko/pkg/awsc"
+	"github.com/matt-major/jobbko/pkg/context"
+	"github.com/matt-major/jobbko/pkg/definitions"
 	"github.com/sirupsen/logrus"
 )
 
@@ -65,7 +66,7 @@ func (p *Processor) processEvent(event awsc.ScheduledEventItem, wg *sync.WaitGro
 	}
 
 	jsonData, _ := json.Marshal(event.Data)
-	var eventData ScheduledEventData
+	var eventData definitions.ScheduledEventData
 	json.Unmarshal(jsonData, &eventData)
 
 	hasSentMessage := p.context.AwsClient.SendEventToQueue(eventData.Payload, eventData.Destination)

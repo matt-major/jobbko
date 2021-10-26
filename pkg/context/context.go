@@ -1,7 +1,7 @@
 package context
 
 import (
-	"github.com/matt-major/jobbko/src/awsc"
+	"github.com/matt-major/jobbko/pkg/awsc"
 	"github.com/sirupsen/logrus"
 )
 
