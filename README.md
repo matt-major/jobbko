@@ -3,7 +3,7 @@ Highly concurrent Amazon SQS message scheduling service written in Go.
 
 ## Development
 
-### Environment Setup
+### Setup
 
 Run the following script to setup LocalStack and the required AWS resources:
 ```sh
@@ -17,8 +17,15 @@ When you're finished, you can clear everything down with the following script:
 $ ./env_destroy.sh
 ```
 
-### Building
+### Build
 
 ```sh
-$ go build -o jobbko ./src
+$ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o jobbko ./src
+$ docker build . -t jobbko
+```
+
+## Running
+
+```sh
+$ docker run jobbko
 ```
