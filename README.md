@@ -1,31 +1,26 @@
 # jobbko
 Highly concurrent Amazon SQS message scheduling service written in Go.
 
-## Development
+## Requirements
+* [Go](https://golang.org)
+* [Docker](https://www.docker.com)
+* [AWS Command Line Interface](https://aws.amazon.com/cli/)
 
-### Setup
-
-Run the following script to setup LocalStack and the required AWS resources:
+## Setup
 ```sh
-$ ./env_setup.sh
+$ make setup
 ```
 
-Now, when you run `jobbko` it will use the `sqs` and `dynamo` resources provisioned by this setup script.
+This command will perform the following tasks:
 
-When you're finished, you can clear everything down with the following script:
-```sh
-$ ./env_destroy.sh
-```
-
-### Build
-
-```sh
-$ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o jobbko cmd/jobbko.go
-$ docker build . -t jobbko
-```
+* Build the `jobbko` binary
+* Build the Docker image
+* Spin up any dependency services
+* Provision the required AWS resources
 
 ## Running
-
 ```sh
-$ docker run jobbko
+$ make run
 ```
+
+If all has gone to plan, `jobbko` should now be running and accessible on `http://localhost:8000`.
